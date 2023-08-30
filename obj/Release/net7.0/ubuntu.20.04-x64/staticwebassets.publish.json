@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "Zz6G8YY9Oox1k1M4hHWPdAVzwPrxsQ0aYGQ7GXI6d1c=",
+  "Source": "fly-server",
+  "BasePath": "_content/fly-server",
+  "Mode": "Default",
+  "ManifestType": "Publish",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
