@@ -1,6 +1,6 @@
-public class SanBayModel
+public class SanBay
 {
-    public int MaSanBay { get; set; }
-    public string ?TenSanBay { get; set; }
-    public string ?DiaDiem { get; set; }
+    public string MaSanBay { get; set; }
+    public string TenSanBay { get; set; }
+    public string DiaChi { get; set; }
 }

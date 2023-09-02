@@ -7,8 +7,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 string connectionString = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
-builder.Services.AddSingleton(connectionString);
-
+builder.Services.AddSingleton<SystemConfigurationService>(new SystemConfigurationService{
+    MaCauHinh = "v1",
+    connectionString = connectionString
+});
 
 var app = builder.Build();
 

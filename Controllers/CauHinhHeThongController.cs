@@ -1,24 +1,22 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 
-
 [Route("api/[controller]")]
 [ApiController]
 public class CauHinhHeThongController : ControllerBase
 {
     private readonly string _connectionString;
 
-    public CauHinhHeThongController(string connectionString)
+    public CauHinhHeThongController(SystemConfigurationService systemConfigurationService)
     {
-        _connectionString = connectionString;
+        _connectionString = systemConfigurationService.connectionString;
     }
 
-    // GET: api/CauHinhHeThong
     [HttpGet]
-    public ActionResult<IEnumerable<CauHinhHeThongModel>> Get()
+    public ActionResult<IEnumerable<CauHinhHeThong>> Get()
     {
-        List<CauHinhHeThongModel> configList = new List<CauHinhHeThongModel>();
-        
+        List<CauHinhHeThong> cauHinhList = new List<CauHinhHeThong>();
+
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             connection.Open();
@@ -29,27 +27,32 @@ public class CauHinhHeThongController : ControllerBase
                 {
                     while (reader.Read())
                     {
-                        CauHinhHeThongModel config = new CauHinhHeThongModel
+                        CauHinhHeThong cauHinh = new CauHinhHeThong
                         {
-                            MaCauHinh = (int)reader["MaCauHinh"],
-                            TenCauHinh = reader["TenCauHinh"].ToString(),
-                            GiaTri = reader["GiaTri"].ToString()
+                            MaCauHinh = reader["MaCauHinh"].ToString(),
+                            SoLuongSanBay = Convert.ToInt32(reader["SoLuongSanBay"]),
+                            ThoiGianBayToiThieu = Convert.ToInt32(reader["ThoiGianBayToiThieu"]),
+                            SoSanBayTrungGianToiDa = Convert.ToInt32(reader["SoSanBayTrungGianToiDa"]),
+                            ThoiGianDungToiThieu = Convert.ToInt32(reader["ThoiGianDungToiThieu"]),
+                            ThoiGianDungToiDa = Convert.ToInt32(reader["ThoiGianDungToiDa"]),
+                            SoLuongHangVe = Convert.ToInt32(reader["SoLuongHangVe"]),
+                            ThoiGianDatVeChamNhat = Convert.ToInt32(reader["ThoiGianDatVeChamNhat"]),
+                            ThoiGianHuyDatVeChamNhat = Convert.ToInt32(reader["ThoiGianHuyDatVeChamNhat"])
                         };
-                        configList.Add(config);
+                        cauHinhList.Add(cauHinh);
                     }
                 }
             }
         }
 
-        return configList;
+        return cauHinhList;
     }
 
-    // GET: api/CauHinhHeThong/5
     [HttpGet("{id}")]
-    public ActionResult<CauHinhHeThongModel> Get(int id)
+    public ActionResult<CauHinhHeThong> Get(string id)
     {
-        CauHinhHeThongModel config = new CauHinhHeThongModel();
-        
+        CauHinhHeThong cauHinh = new CauHinhHeThong();
+
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             connection.Open();
@@ -61,9 +64,15 @@ public class CauHinhHeThongController : ControllerBase
                 {
                     if (reader.Read())
                     {
-                        config.MaCauHinh = (int)reader["MaCauHinh"];
-                        config.TenCauHinh = reader["TenCauHinh"].ToString();
-                        config.GiaTri = reader["GiaTri"].ToString();
+                        cauHinh.MaCauHinh = reader["MaCauHinh"].ToString();
+                        cauHinh.SoLuongSanBay = Convert.ToInt32(reader["SoLuongSanBay"]);
+                        cauHinh.ThoiGianBayToiThieu = Convert.ToInt32(reader["ThoiGianBayToiThieu"]);
+                        cauHinh.SoSanBayTrungGianToiDa = Convert.ToInt32(reader["SoSanBayTrungGianToiDa"]);
+                        cauHinh.ThoiGianDungToiThieu = Convert.ToInt32(reader["ThoiGianDungToiThieu"]);
+                        cauHinh.ThoiGianDungToiDa = Convert.ToInt32(reader["ThoiGianDungToiDa"]);
+                        cauHinh.SoLuongHangVe = Convert.ToInt32(reader["SoLuongHangVe"]);
+                        cauHinh.ThoiGianDatVeChamNhat = Convert.ToInt32(reader["ThoiGianDatVeChamNhat"]);
+                        cauHinh.ThoiGianHuyDatVeChamNhat = Convert.ToInt32(reader["ThoiGianHuyDatVeChamNhat"]);
                     }
                     else
                     {
@@ -73,72 +82,94 @@ public class CauHinhHeThongController : ControllerBase
             }
         }
 
-        return config;
+        return cauHinh;
     }
 
-    // POST: api/CauHinhHeThong
     [HttpPost]
-    public IActionResult Post([FromBody] CauHinhHeThongModel config)
+    public IActionResult Post([FromBody] CauHinhHeThong cauHinh)
     {
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             connection.Open();
-            string query = "INSERT INTO CauHinhHeThong (MaCauHinh, TenCauHinh, GiaTri) VALUES (@maCauHinh, @ten, @giaTri)";
-            using (SqlCommand command = new SqlCommand(query, connection))
+            string insertQuery = "INSERT INTO CauHinhHeThong (MaCauHinh, SoLuongSanBay, ThoiGianBayToiThieu, SoSanBayTrungGianToiDa, ThoiGianDungToiThieu, ThoiGianDungToiDa, SoLuongHangVe, ThoiGianDatVeChamNhat, ThoiGianHuyDatVeChamNhat) VALUES (@maCauHinh, @soLuongSanBay, @thoiGianBayToiThieu, @soSanBayTrungGianToiDa, @thoiGianDungToiThieu, @thoiGianDungToiDa, @soLuongHangVe, @thoiGianDatVeChamNhat, @thoiGianHuyDatVeChamNhat)";
+            using (SqlCommand command = new SqlCommand(insertQuery, connection))
             {
-                command.Parameters.AddWithValue("@maCauHinh", config.MaCauHinh);
-                command.Parameters.AddWithValue("@ten", config.TenCauHinh);
-                command.Parameters.AddWithValue("@giaTri", config.GiaTri);
-                command.ExecuteNonQuery();
+                command.Parameters.AddWithValue("@maCauHinh", cauHinh.MaCauHinh);
+                command.Parameters.AddWithValue("@soLuongSanBay", cauHinh.SoLuongSanBay);
+                command.Parameters.AddWithValue("@thoiGianBayToiThieu", cauHinh.ThoiGianBayToiThieu);
+                command.Parameters.AddWithValue("@soSanBayTrungGianToiDa", cauHinh.SoSanBayTrungGianToiDa);
+                command.Parameters.AddWithValue("@thoiGianDungToiThieu", cauHinh.ThoiGianDungToiThieu);
+                command.Parameters.AddWithValue("@thoiGianDungToiDa", cauHinh.ThoiGianDungToiDa);
+                command.Parameters.AddWithValue("@soLuongHangVe", cauHinh.SoLuongHangVe);
+                command.Parameters.AddWithValue("@thoiGianDatVeChamNhat", cauHinh.ThoiGianDatVeChamNhat);
+                command.Parameters.AddWithValue("@thoiGianHuyDatVeChamNhat", cauHinh.ThoiGianHuyDatVeChamNhat);
+
+                int rowsAffected = command.ExecuteNonQuery();
+                if (rowsAffected > 0)
+                {
+                    return CreatedAtAction("Get", new { id = cauHinh.MaCauHinh }, cauHinh);
+                }
+                else
+                {
+                    return BadRequest("Thêm cấu hình hệ thống thất bại.");
+                }
             }
         }
-
-        return CreatedAtAction("Get", new { id = config.MaCauHinh }, config);
     }
 
-    // PUT: api/CauHinhHeThong/5
     [HttpPut("{id}")]
-    public IActionResult Put(int id, [FromBody] CauHinhHeThongModel config)
+    public IActionResult Put(string id, [FromBody] CauHinhHeThong cauHinh)
     {
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             connection.Open();
-            string query = "UPDATE CauHinhHeThong SET TenCauHinh = @ten, GiaTri = @giaTri WHERE MaCauHinh = @id";
-            using (SqlCommand command = new SqlCommand(query, connection))
+            string updateQuery = "UPDATE CauHinhHeThong SET SoLuongSanBay = @soLuongSanBay, ThoiGianBayToiThieu = @thoiGianBayToiThieu, SoSanBayTrungGianToiDa = @soSanBayTrungGianToiDa, ThoiGianDungToiThieu = @thoiGianDungToiThieu, ThoiGianDungToiDa = @thoiGianDungToiDa, SoLuongHangVe = @soLuongHangVe, ThoiGianDatVeChamNhat = @thoiGianDatVeChamNhat, ThoiGianHuyDatVeChamNhat = @thoiGianHuyDatVeChamNhat WHERE MaCauHinh = @maCauHinh";
+            using (SqlCommand command = new SqlCommand(updateQuery, connection))
             {
-                command.Parameters.AddWithValue("@id", id);
-                command.Parameters.AddWithValue("@ten", config.TenCauHinh);
-                command.Parameters.AddWithValue("@giaTri", config.GiaTri);
+                command.Parameters.AddWithValue("@maCauHinh", id);
+                command.Parameters.AddWithValue("@soLuongSanBay", cauHinh.SoLuongSanBay);
+                command.Parameters.AddWithValue("@thoiGianBayToiThieu", cauHinh.ThoiGianBayToiThieu);
+                command.Parameters.AddWithValue("@soSanBayTrungGianToiDa", cauHinh.SoSanBayTrungGianToiDa);
+                command.Parameters.AddWithValue("@thoiGianDungToiThieu", cauHinh.ThoiGianDungToiThieu);
+                command.Parameters.AddWithValue("@thoiGianDungToiDa", cauHinh.ThoiGianDungToiDa);
+                command.Parameters.AddWithValue("@soLuongHangVe", cauHinh.SoLuongHangVe);
+                command.Parameters.AddWithValue("@thoiGianDatVeChamNhat", cauHinh.ThoiGianDatVeChamNhat);
+                command.Parameters.AddWithValue("@thoiGianHuyDatVeChamNhat", cauHinh.ThoiGianHuyDatVeChamNhat);
+
                 int rowsAffected = command.ExecuteNonQuery();
-                if (rowsAffected == 0)
+                if (rowsAffected > 0)
+                {
+                    return NoContent();
+                }
+                else
                 {
                     return NotFound();
                 }
             }
         }
-
-        return NoContent();
     }
 
-    // DELETE: api/CauHinhHeThong/5
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    public IActionResult Delete(string id)
     {
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             connection.Open();
-            string query = "DELETE FROM CauHinhHeThong WHERE MaCauHinh = @id";
-            using (SqlCommand command = new SqlCommand(query, connection))
+            string deleteQuery = "DELETE FROM CauHinhHeThong WHERE MaCauHinh = @maCauHinh";
+            using (SqlCommand command = new SqlCommand(deleteQuery, connection))
             {
-                command.Parameters.AddWithValue("@id", id);
+                command.Parameters.AddWithValue("@maCauHinh", id);
+
                 int rowsAffected = command.ExecuteNonQuery();
-                if (rowsAffected == 0)
+                if (rowsAffected > 0)
+                {
+                    return NoContent();
+                }
+                else
                 {
                     return NotFound();
                 }
             }
         }
-
-        return NoContent();
     }
 }
