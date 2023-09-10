@@ -4,5 +4,4 @@ public class Ve
     public int MaHanhKhach { get; set; }
     public int MaHangVe { get; set; }
     public int MaLichChuyenBay { get; set; }
-    public int MaTrangThai { get; set; }
 }

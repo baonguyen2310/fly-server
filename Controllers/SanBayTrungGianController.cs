@@ -84,44 +84,12 @@ public class SanBayTrungGianController : ControllerBase
         return sanBayTrungGian;
     }
 
-    [HttpGet("ByMaLichChuyenBay/{maLichChuyenBay}")]
-    public ActionResult<IEnumerable<SanBayTrungGian>> GetByMaLichChuyenBay(int maLichChuyenBay)
-    {
-        List<SanBayTrungGian> sanBayTrungGianList = new List<SanBayTrungGian>();
-
-        using (SqlConnection connection = new SqlConnection(_connectionString))
-        {
-            connection.Open();
-            string query = "SELECT * FROM SanBayTrungGian WHERE MaLichChuyenBay = @maLichChuyenBay";
-            using (SqlCommand command = new SqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@maLichChuyenBay", maLichChuyenBay);
-                using (SqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        SanBayTrungGian sanBayTrungGian = new SanBayTrungGian
-                        {
-                            MaSanBayTrungGian = Convert.ToInt32(reader["MaSanBayTrungGian"]),
-                            MaLichChuyenBay = Convert.ToInt32(reader["MaLichChuyenBay"]),
-                            MaSanBay = reader["MaSanBay"].ToString(),
-                            ThoiGianBatDauDung = Convert.ToDateTime(reader["ThoiGianBatDauDung"]),
-                            ThoiGianKetThucDung = Convert.ToDateTime(reader["ThoiGianKetThucDung"]),
-                            GhiChu = reader["GhiChu"].ToString()
-                        };
-                        sanBayTrungGianList.Add(sanBayTrungGian);
-                    }
-                }
-            }
-        }
-
-        return sanBayTrungGianList;
-    }
-
-
     [HttpPost]
     public IActionResult Post([FromBody] SanBayTrungGian sanBayTrungGian)
     {
+        // Kiểm tra số lượng sân bay trung gian của chuyến bay
+        int currentSanBayTrungGianCount = CountSanBayTrungGian(sanBayTrungGian.MaLichChuyenBay);
+
         // Kiểm tra số sân bay trung gian tối đa dựa trên cấu hình hệ thống
         int soSanBayTrungGianToiDa = GetSoSanBayTrungGianToiDaFromConfig();
 
@@ -132,7 +100,7 @@ public class SanBayTrungGianController : ControllerBase
         // Tính thời gian dừng của sân bay trung gian
         int thoiGianDung = CalculateDungTime(sanBayTrungGian.ThoiGianBatDauDung, sanBayTrungGian.ThoiGianKetThucDung);
 
-        if (soSanBayTrungGianToiDa > 0 && thoiGianDung < thoiGianDungToiThieu && thoiGianDung > thoiGianDungToiDa)
+        if (currentSanBayTrungGianCount >= soSanBayTrungGianToiDa || thoiGianDung < thoiGianDungToiThieu || thoiGianDung > thoiGianDungToiDa)
         {
             return BadRequest("Số sân bay trung gian hoặc thời gian dừng không đúng theo cấu hình hệ thống.");
         }
@@ -166,6 +134,9 @@ public class SanBayTrungGianController : ControllerBase
     [HttpPut("{id}")]
     public IActionResult Put(int id, [FromBody] SanBayTrungGian sanBayTrungGian)
     {
+        // Kiểm tra số lượng sân bay trung gian của chuyến bay
+        int currentSanBayTrungGianCount = CountSanBayTrungGian(sanBayTrungGian.MaLichChuyenBay);
+
         // Kiểm tra số sân bay trung gian tối đa dựa trên cấu hình hệ thống
         int soSanBayTrungGianToiDa = GetSoSanBayTrungGianToiDaFromConfig();
 
@@ -176,7 +147,7 @@ public class SanBayTrungGianController : ControllerBase
         // Tính thời gian dừng của sân bay trung gian
         int thoiGianDung = CalculateDungTime(sanBayTrungGian.ThoiGianBatDauDung, sanBayTrungGian.ThoiGianKetThucDung);
 
-        if (soSanBayTrungGianToiDa > 0 && thoiGianDung < thoiGianDungToiThieu && thoiGianDung > thoiGianDungToiDa)
+        if (currentSanBayTrungGianCount >= soSanBayTrungGianToiDa || thoiGianDung < thoiGianDungToiThieu || thoiGianDung > thoiGianDungToiDa)
         {
             return BadRequest("Số sân bay trung gian hoặc thời gian dừng không đúng theo cấu hình hệ thống.");
         }
@@ -231,6 +202,43 @@ public class SanBayTrungGianController : ControllerBase
                 }
             }
         }
+    }
+
+
+    // ---------------CRUD THEO MÃ LỊCH CHUYẾN BAY-----------------
+
+    [HttpGet("ByMaLichChuyenBay/{maLichChuyenBay}")]
+    public ActionResult<IEnumerable<SanBayTrungGian>> GetByMaLichChuyenBay(int maLichChuyenBay)
+    {
+        List<SanBayTrungGian> sanBayTrungGianList = new List<SanBayTrungGian>();
+
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            connection.Open();
+            string query = "SELECT * FROM SanBayTrungGian WHERE MaLichChuyenBay = @maLichChuyenBay";
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@maLichChuyenBay", maLichChuyenBay);
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        SanBayTrungGian sanBayTrungGian = new SanBayTrungGian
+                        {
+                            MaSanBayTrungGian = Convert.ToInt32(reader["MaSanBayTrungGian"]),
+                            MaLichChuyenBay = Convert.ToInt32(reader["MaLichChuyenBay"]),
+                            MaSanBay = reader["MaSanBay"].ToString(),
+                            ThoiGianBatDauDung = Convert.ToDateTime(reader["ThoiGianBatDauDung"]),
+                            ThoiGianKetThucDung = Convert.ToDateTime(reader["ThoiGianKetThucDung"]),
+                            GhiChu = reader["GhiChu"].ToString()
+                        };
+                        sanBayTrungGianList.Add(sanBayTrungGian);
+                    }
+                }
+            }
+        }
+
+        return sanBayTrungGianList;
     }
 
     // Phương thức để lấy số sân bay trung gian tối đa từ cấu hình hệ thống
@@ -309,4 +317,28 @@ public class SanBayTrungGianController : ControllerBase
         TimeSpan duration = thoiGianKetThucDung - thoiGianBatDauDung;
         return (int)duration.TotalMinutes;
     }
+
+    // Phương thức để đếm số lượng sân bay trung gian của chuyến bay
+    private int CountSanBayTrungGian(int maLichChuyenBay)
+    {
+        int sanBayTrungGianCount = 0;
+
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            connection.Open();
+            string query = "SELECT COUNT(*) FROM SanBayTrungGian WHERE MaLichChuyenBay = @maLichChuyenBay";
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@maLichChuyenBay", maLichChuyenBay);
+                object result = command.ExecuteScalar();
+                if (result != null)
+                {
+                    sanBayTrungGianCount = Convert.ToInt32(result);
+                }
+            }
+        }
+
+        return sanBayTrungGianCount;
+    }
+
 }
